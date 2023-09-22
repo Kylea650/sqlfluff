@@ -32,7 +32,14 @@ from sqlfluff.core.parser.segments import (
 from sqlfluff.core.parser.types import MatchableType, ParseMode, SimpleHintType
 
 
-def _flush_metas(pre_nc_idx, post_nc_idx, meta_buffer):
+def _flush_metas(
+    pre_nc_idx: int, post_nc_idx: int, meta_buffer: SequenceType[Type[MetaSegment]]
+) -> Tuple[Tuple[int, Type[MetaSegment]], ...]:
+    """Using the balance of any metas in the buffer, determine positions.
+
+    If they're _all positive_, then they come before any whitespace,
+    but otherwise they come after. We always preserve the order.
+    """
     # Flush any metas...
     if all(m.indent_val >= 0 for m in meta_buffer):
         meta_idx = pre_nc_idx

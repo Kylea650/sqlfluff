@@ -65,7 +65,7 @@ def first_trimmed_raw(seg: BaseSegment) -> str:
 
 def first_non_whitespace(
     segments: Sequence[BaseSegment],
-    start_idx=0,
+    start_idx: int = 0,
 ) -> Optional[Tuple[str, Set[str]]]:
     """Return the upper first non-whitespace segment in the iterable."""
     for i in range(start_idx, len(segments)):
@@ -103,7 +103,7 @@ def prune_options(
     options: Sequence[MatchableType],
     segments: Sequence[BaseSegment],
     parse_context: ParseContext,
-    start_idx=0,
+    start_idx: int = 0,
 ) -> List[MatchableType]:
     """Use the simple matchers to prune which options to match on.
 

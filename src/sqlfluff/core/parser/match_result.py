@@ -65,7 +65,7 @@ class MatchResult2:
     def __len__(self) -> int:
         return slice_length(self.matched_slice)
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         """Evaluate this MatchResult2 for whether it counts as a clean match.
 
         A MatchResult2 is truthy if it has:
@@ -74,7 +74,7 @@ class MatchResult2:
         """
         return len(self) > 0 or bool(self.insert_segments)
 
-    def stringify(self, indent=""):
+    def stringify(self, indent: str = "") -> str:
         """Pretty print a match for debugging.
 
         TODO: Needs tests (and probably being used more).
@@ -92,7 +92,7 @@ class MatchResult2:
         return buffer
 
     @classmethod
-    def empty_at(cls, idx):
+    def empty_at(cls, idx: int) -> "MatchResult2":
         """Create an empty match at a particular index.
 
         An empty match is by definition, unclean.
@@ -238,8 +238,7 @@ class MatchResult2:
                     max_idx = trigger.matched_slice.stop
                     continue
 
-                # Otherwise it's a segment.
-                seg_type = cast(Type["MetaSegment"], trigger)
+                # Otherwise `trigger` is a MetaSegment.
                 # Get the location from the next segment unless there isn't one.
                 if idx < len(segments):
                     _next_pos = segments[idx].pos_marker
@@ -253,7 +252,7 @@ class MatchResult2:
                         _prev_pos
                     ), "Segments passed to .apply() should all have position."
                     _pos = _prev_pos.end_point_marker()
-                result_segments += (seg_type(pos_marker=_pos),)
+                result_segments += (trigger(pos_marker=_pos),)
 
         # If we finish working through the triggers and there's
         # still something left, then add that too.
@@ -280,6 +279,3 @@ class MatchResult2:
                 segments=result_segments, **self.segment_kwargs
             )
         return (new_seg,)
-
-    def _to_old_match_result(self, segments):
-        pass
