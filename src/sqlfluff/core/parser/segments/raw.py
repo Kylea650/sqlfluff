@@ -4,7 +4,7 @@ This is designed to be the root segment, without
 any children, and the output of the lexer.
 """
 
-from typing import Any, List, Optional, Set, Tuple
+from typing import Any, List, Optional, Set, Tuple, Union
 from uuid import UUID, uuid4
 
 from sqlfluff.core.parser.markers import PositionMarker
@@ -26,7 +26,9 @@ class RawSegment(BaseSegment):
         self,
         raw: Optional[str] = None,
         pos_marker: Optional[PositionMarker] = None,
-        type: Optional[str] = None,
+        # Optionally, type can also be a tuple of types, where
+        # the first is the "main" type.
+        type: Optional[Union[str, Tuple[str, ...]]] = None,
         trim_start: Optional[Tuple[str, ...]] = None,
         trim_chars: Optional[Tuple[str, ...]] = None,
         source_fixes: Optional[List[SourceFix]] = None,
@@ -50,7 +52,14 @@ class RawSegment(BaseSegment):
         # Set the segments attribute to be an empty tuple.
         self.segments = ()
         # if a surrogate type is provided, store it for later.
-        self._surrogate_type = type
+        self._surrogate_types: Tuple[str, ...]
+        if type is None:
+            self._surrogate_types = ()
+        elif isinstance(type, str):
+            self._surrogate_types = (type,)
+        else:
+            assert isinstance(type, tuple)
+            self._surrogate_types = type
         # What should we trim off the ends to get to content
         self.trim_start = trim_start
         self.trim_chars = trim_chars
@@ -115,9 +124,7 @@ class RawSegment(BaseSegment):
 
         Add the surrogate type for raw segments.
         """
-        return (
-            {self._surrogate_type} if self._surrogate_type else set()
-        ) | super().class_types
+        return set(self._surrogate_types) | super().class_types
 
     @property
     def source_fixes(self) -> List[SourceFix]:
@@ -132,11 +139,13 @@ class RawSegment(BaseSegment):
 
     def get_type(self) -> str:
         """Returns the type of this segment as a string."""
-        return self._surrogate_type or self.type
+        if self._surrogate_types:
+            return self._surrogate_types[0]
+        return self.type
 
     def is_type(self, *seg_type: str) -> bool:
         """Extend the parent class method with the surrogate types."""
-        if self._surrogate_type and self._surrogate_type in seg_type:
+        if self._surrogate_types and set(self._surrogate_types).intersection(seg_type):
             return True
         return self.class_is_type(*seg_type)
 
@@ -194,7 +203,7 @@ class RawSegment(BaseSegment):
         return self.__class__(
             raw=raw or self.raw,
             pos_marker=self.pos_marker,
-            type=self._surrogate_type,
+            type=self._surrogate_types,
             trim_start=self.trim_start,
             trim_chars=self.trim_chars,
             source_fixes=source_fixes or self.source_fixes,
@@ -296,7 +305,7 @@ class KeywordSegment(CodeSegment):
         return self.__class__(
             raw=raw or self.raw,
             pos_marker=self.pos_marker,
-            type=self._surrogate_type,
+            type=self._surrogate_types,
             source_fixes=source_fixes or self.source_fixes,
         )
 

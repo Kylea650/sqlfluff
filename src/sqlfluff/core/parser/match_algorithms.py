@@ -12,14 +12,13 @@ from sqlfluff.core.errors import SQLParseError
 from sqlfluff.core.parser.context import ParseContext
 from sqlfluff.core.parser.match_result import MatchResult2
 from sqlfluff.core.parser.segments import BaseSegment, BracketedSegment
-from sqlfluff.core.parser.segments.base import BaseSegment
-from sqlfluff.core.parser.segments.bracketed import BracketedSegment
 from sqlfluff.core.parser.types import MatchableType
 
 
 def skip_start_index_forward_to_code(
     segments: Sequence[BaseSegment], start_idx: int, max_idx: Optional[int] = None
 ) -> int:
+    """Move an index forward through segments until segments[index] is code."""
     if max_idx is None:
         max_idx = len(segments)
     for _idx in range(start_idx, max_idx):
@@ -33,6 +32,7 @@ def skip_start_index_forward_to_code(
 def skip_stop_index_backward_to_code(
     segments: Sequence[BaseSegment], stop_idx: int, min_idx: int = 0
 ) -> int:
+    """Move an index backward through segments until segments[index - 1] is code."""
     for _idx in range(stop_idx, min_idx, -1):
         if segments[_idx - 1].is_code:
             break

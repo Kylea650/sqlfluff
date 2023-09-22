@@ -229,7 +229,9 @@ class Sequence(BaseGrammar):
                         matched_slice=slice(start_idx, max_idx),
                         matched_class=UnparsableSegment,
                         segment_kwargs={
-                            "expected": f"{elem} to start sequence. Found {segments[_idx]}"
+                            "expected": (
+                                f"{elem} to start sequence. " f"Found {segments[_idx]}"
+                            )
                         },
                     )
 

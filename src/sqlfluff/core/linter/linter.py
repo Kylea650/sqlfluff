@@ -509,6 +509,7 @@ class Linter:
                                     "report this as a bug with a minimal query "
                                     "which demonstrates this warning."
                                 )
+                                continue
                             elif loop_check_tuple not in previous_versions:
                                 # We've not seen this version of the file so
                                 # far. Continue.
