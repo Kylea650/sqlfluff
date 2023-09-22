@@ -14,13 +14,14 @@ from typing import (
     Optional,
     Tuple,
     Type,
+    Union,
     cast,
 )
 
 from sqlfluff.core.slice_helpers import slice_length
 
 if TYPE_CHECKING:  # pragma: no cover
-    from sqlfluff.core.parser.segments import BaseSegment, MetaSegment
+    from sqlfluff.core.parser.segments import BaseSegment, MetaSegment, RawSegment
 
 
 @dataclass(frozen=True)
@@ -124,7 +125,7 @@ class MatchResult2:
         # match.
         assert self.matched_slice.stop <= other.matched_slice.start
         new_slice = slice(self.matched_slice.start, other.matched_slice.stop)
-        child_matches = ()
+        child_matches: Tuple["MatchResult2", ...] = ()
         for match in (self, other):
             # If it's got a matched class, add it as a child.
             if match.matched_class:
@@ -152,6 +153,7 @@ class MatchResult2:
         NOTE: Because MatchResult2 is frozen, this returns a new
         match.
         """
+        child_matches: Tuple["MatchResult2", ...]
         if self.matched_class:
             # If the match already has a class, then make
             # the current one and child match and clear the
@@ -207,7 +209,7 @@ class MatchResult2:
 
         # Which are the locations we need to care about?
         trigger_locs: DefaultDict[
-            int, List[MatchResult2, Type["MetaSegment"]]
+            int, List[Union[MatchResult2, Type["MetaSegment"]]]
         ] = defaultdict(list)
         # Add the inserts first...
         for insert in self.insert_segments:
@@ -217,7 +219,7 @@ class MatchResult2:
             trigger_locs[match.matched_slice.start].append(match)
 
         # Then work through creating any subsegments.
-        result_segments = ()
+        result_segments: Tuple[BaseSegment, ...] = ()
         max_idx = self.matched_slice.start
         for idx in sorted(trigger_locs.keys()):
             # Have we passed any untouched segments?
@@ -237,12 +239,20 @@ class MatchResult2:
                     continue
 
                 # Otherwise it's a segment.
-                seg_type = cast("MetaSegment", trigger)
+                seg_type = cast(Type["MetaSegment"], trigger)
                 # Get the location from the next segment unless there isn't one.
                 if idx < len(segments):
-                    _pos = segments[idx].pos_marker.start_point_marker()
+                    _next_pos = segments[idx].pos_marker
+                    assert (
+                        _next_pos
+                    ), "Segments passed to .apply() should all have position."
+                    _pos = _next_pos.start_point_marker()
                 else:
-                    _pos = segments[idx - 1].pos_marker.end_point_marker()
+                    _prev_pos = segments[idx - 1].pos_marker
+                    assert (
+                        _prev_pos
+                    ), "Segments passed to .apply() should all have position."
+                    _pos = _prev_pos.end_point_marker()
                 result_segments += (seg_type(pos_marker=_pos),)
 
         # If we finish working through the triggers and there's
@@ -254,11 +264,13 @@ class MatchResult2:
             return result_segments
 
         # Otherwise construct the subsegment
+        new_seg: "BaseSegment"
         if self.matched_class.class_is_type("raw"):
+            _raw_type = cast(Type["RawSegment"], self.matched_class)
             assert len(result_segments) == 1
             # TODO: Should this be a generic method on BaseSegment and RawSegment?
             # It feels a little strange to be this specific here.
-            new_seg = self.matched_class(
+            new_seg = _raw_type(
                 raw=result_segments[0].raw,
                 pos_marker=result_segments[0].pos_marker,
                 **self.segment_kwargs,

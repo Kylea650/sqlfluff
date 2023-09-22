@@ -4,7 +4,7 @@ Matchable objects which return individual segments.
 """
 
 from abc import abstractmethod
-from typing import Collection, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Collection, Dict, List, Optional, Sequence, Tuple, Type, Union
 from uuid import uuid4
 
 import regex
@@ -27,13 +27,13 @@ class BaseParser(Matchable):
     def __init__(
         self,
         raw_class: Type[RawSegment],
-        type: Optional[Union[str, Tuple[str]]] = None,
+        type: Optional[Union[str, Tuple[str, ...]]] = None,
         optional: bool = False,
         # The following kwargs are passed on to the segment:
         trim_chars: Optional[Tuple[str, ...]] = None,
     ) -> None:
         self.raw_class = raw_class
-        self.type: str = type or raw_class.type
+        self.type: Union[str, Tuple[str, ...]] = type or raw_class.type
         self.optional = optional
         self._trim_chars = trim_chars
         # Generate a cache key
@@ -55,7 +55,7 @@ class BaseParser(Matchable):
 
         This is a helper function for reuse by other parsers.
         """
-        segment_kwargs = {}
+        segment_kwargs: Dict[str, Any] = {}
         if self.type:
             segment_kwargs["type"] = self.type
         if self._trim_chars:
@@ -74,7 +74,7 @@ class TypedParser(BaseParser):
         self,
         template: str,
         raw_class: Type[RawSegment],
-        type: Optional[Union[str, Tuple[str]]] = None,
+        type: Optional[Union[str, Tuple[str, ...]]] = None,
         optional: bool = False,
         trim_chars: Optional[Tuple[str, ...]] = None,
     ) -> None:
@@ -84,6 +84,7 @@ class TypedParser(BaseParser):
         # Pre-calculate the appropriate frozenset for matching later.
         _target_types: Tuple[str, ...] = (template,)
         if type is not None and type != template:
+            _types: Tuple[str, ...]
             if isinstance(type, str):
                 _types = (type,)
             else:
@@ -138,7 +139,7 @@ class StringParser(BaseParser):
         self,
         template: str,
         raw_class: Type[RawSegment],
-        type: Optional[Union[str, Tuple[str]]] = None,
+        type: Optional[Union[str, Tuple[str, ...]]] = None,
         optional: bool = False,
         trim_chars: Optional[Tuple[str, ...]] = None,
     ):
@@ -188,7 +189,7 @@ class MultiStringParser(BaseParser):
         self,
         templates: Collection[str],
         raw_class: Type[RawSegment],
-        type: Optional[Union[str, Tuple[str]]] = None,
+        type: Optional[Union[str, Tuple[str, ...]]] = None,
         optional: bool = False,
         trim_chars: Optional[Tuple[str, ...]] = None,
     ):
@@ -238,7 +239,7 @@ class RegexParser(BaseParser):
         self,
         template: str,
         raw_class: Type[RawSegment],
-        type: Optional[Union[str, Tuple[str]]] = None,
+        type: Optional[Union[str, Tuple[str, ...]]] = None,
         optional: bool = False,
         anti_template: Optional[str] = None,
         trim_chars: Optional[Tuple[str, ...]] = None,

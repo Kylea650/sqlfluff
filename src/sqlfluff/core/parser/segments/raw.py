@@ -277,7 +277,7 @@ class KeywordSegment(CodeSegment):
         self,
         raw: Optional[str] = None,
         pos_marker: Optional[PositionMarker] = None,
-        type: Optional[str] = None,
+        type: Optional[Union[str, Tuple[str, ...]]] = None,
         source_fixes: Optional[List[SourceFix]] = None,
         trim_chars: Optional[Tuple[str, ...]] = None,
     ):

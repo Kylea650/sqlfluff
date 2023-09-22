@@ -5,7 +5,7 @@
 from os import getenv
 from typing import Optional
 from typing import Sequence as SequenceType
-from typing import Set, Tuple, Union
+from typing import Set, Tuple, Type, Union
 
 from sqlfluff.core.parser.context import ParseContext
 from sqlfluff.core.parser.grammar.base import (
@@ -26,6 +26,7 @@ from sqlfluff.core.parser.segments import (
     BracketedSegment,
     Dedent,
     Indent,
+    MetaSegment,
     UnparsableSegment,
 )
 from sqlfluff.core.parser.types import MatchableType, ParseMode, SimpleHintType
@@ -95,8 +96,8 @@ class Sequence(BaseGrammar):
         start_idx = idx  # Where did we start
         matched_idx = idx  # Where have we got to
         max_idx = len(segments)  # What is the limit
-        insert_segments = ()
-        child_matches = ()
+        insert_segments: Tuple[Tuple[int, Type[MetaSegment]], ...] = ()
+        child_matches: Tuple[MatchResult2, ...] = ()
         first_match = True
         # Metas with a negative indent value come AFTER
         # the whitespace. Positive or neutral come BEFORE.
