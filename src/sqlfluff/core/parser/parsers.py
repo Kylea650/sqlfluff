@@ -4,7 +4,7 @@ Matchable objects which return individual segments.
 """
 
 from abc import abstractmethod
-from typing import Collection, List, Optional, Sequence, Tuple, Type
+from typing import Collection, List, Optional, Sequence, Tuple, Type, Union
 from uuid import uuid4
 
 import regex
@@ -27,7 +27,7 @@ class BaseParser(Matchable):
     def __init__(
         self,
         raw_class: Type[RawSegment],
-        type: Optional[str] = None,
+        type: Optional[Union[str, Tuple[str]]] = None,
         optional: bool = False,
         # The following kwargs are passed on to the segment:
         trim_chars: Optional[Tuple[str, ...]] = None,
@@ -74,7 +74,7 @@ class TypedParser(BaseParser):
         self,
         template: str,
         raw_class: Type[RawSegment],
-        type: Optional[str] = None,
+        type: Optional[Union[str, Tuple[str]]] = None,
         optional: bool = False,
         trim_chars: Optional[Tuple[str, ...]] = None,
     ) -> None:
@@ -82,9 +82,16 @@ class TypedParser(BaseParser):
         # The type kwarg is the eventual type.
         self.template = template
         # Pre-calculate the appropriate frozenset for matching later.
-        _target_types: List[str] = [template]
+        _target_types: Tuple[str, ...] = (template,)
         if type is not None and type != template:
-            _target_types.append(type)
+            if isinstance(type, str):
+                _types = (type,)
+            else:
+                _types = type
+            # NOTE: we PREPEND the specified types, not APPEND.
+            # This is so the *specified* type becomes the top level
+            # type, not the template.
+            _target_types = _types + _target_types
         self._target_types = frozenset(_target_types)
         super().__init__(
             raw_class=raw_class,
@@ -92,7 +99,7 @@ class TypedParser(BaseParser):
             # that the original type is still preserved as one of the new types.
             # The new `type` becomes the "main" type, but the template will still
             # be part of the resulting `class_types`.
-            type=tuple(_target_types),
+            type=_target_types,
             optional=optional,
             trim_chars=trim_chars,
         )
@@ -131,7 +138,7 @@ class StringParser(BaseParser):
         self,
         template: str,
         raw_class: Type[RawSegment],
-        type: Optional[str] = None,
+        type: Optional[Union[str, Tuple[str]]] = None,
         optional: bool = False,
         trim_chars: Optional[Tuple[str, ...]] = None,
     ):
@@ -181,7 +188,7 @@ class MultiStringParser(BaseParser):
         self,
         templates: Collection[str],
         raw_class: Type[RawSegment],
-        type: Optional[str] = None,
+        type: Optional[Union[str, Tuple[str]]] = None,
         optional: bool = False,
         trim_chars: Optional[Tuple[str, ...]] = None,
     ):
@@ -231,7 +238,7 @@ class RegexParser(BaseParser):
         self,
         template: str,
         raw_class: Type[RawSegment],
-        type: Optional[str] = None,
+        type: Optional[Union[str, Tuple[str]]] = None,
         optional: bool = False,
         anti_template: Optional[str] = None,
         trim_chars: Optional[Tuple[str, ...]] = None,
