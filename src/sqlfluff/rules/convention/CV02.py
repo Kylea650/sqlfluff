@@ -3,8 +3,8 @@
 from typing import Optional
 
 from sqlfluff.core.parser.segments.raw import CodeSegment
-from sqlfluff.core.rules.crawlers import SegmentSeekerCrawler
 from sqlfluff.core.rules import BaseRule, LintFix, LintResult, RuleContext
+from sqlfluff.core.rules.crawlers import SegmentSeekerCrawler
 
 
 class Rule_CV02(BaseRule):
@@ -60,7 +60,11 @@ class Rule_CV02(BaseRule):
             [
                 CodeSegment(
                     raw="COALESCE",
-                    type="function_name_identifier",
+                    # TODO: Write a better comment about why this is necessary.
+                    # The CodeSegment class doesn't automatically add the "code"
+                    # type, so we have to add it manually here so that segments
+                    # will reparse after fixing.
+                    type=("function_name_identifier", "code"),
                 )
             ],
         )

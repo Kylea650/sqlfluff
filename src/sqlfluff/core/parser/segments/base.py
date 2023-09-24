@@ -1381,8 +1381,8 @@ class BaseSegment(metaclass=SegmentMetaclass):
         rematch = segment.match2(trimmed_content, 0, ctx)
         if not rematch.matched_slice == slice(0, len(trimmed_content)):
             linter_logger.debug(
-                f"Validation Check Fail for {segment}.Incomplete Match. "
-                f"\nMatched: {rematch.apply(trimmed_content)}. "
+                f"Validation Check Fail for {segment}. Incomplete Match. "
+                f"\n{rematch.matched_slice} != {slice(0, len(trimmed_content))}."
                 f"\nUnmatched: {trimmed_content[rematch.matched_slice.stop:]}."
             )
             return False
